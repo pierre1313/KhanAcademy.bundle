@@ -1,8 +1,3 @@
-# PMS plugin framework
-from PMS import *
-from PMS.Objects import *
-from PMS.Shortcuts import *
-
 from collections import deque
 
 import re
@@ -36,6 +31,8 @@ def Start():
     MediaContainer.art = R(ART)
     MediaContainer.title1 = NAME
     DirectoryItem.thumb = R(ICON)
+    
+    HTTP.CacheTime = 3600
 
 def VideoMainMenu():
 
@@ -52,9 +49,9 @@ def ByCategory(sender, Menu = None ):
     dir = MediaContainer(viewGroup="List")
 
     if Menu == None:
-      Menu = XML.ElementFromURL('http://www.khanacademy.org/',True).xpath("//ul[@class='menu']")[0]
+      Menu = HTML.ElementFromURL('http://www.khanacademy.org/').xpath("//ul[@class='menu']")[0]
     else:
-      Menu = XML.ElementFromString(Menu,True)
+      Menu = HTML.ElementFromString(Menu)
 
     queue = deque([Menu])
     el = queue.popleft() 
@@ -74,7 +71,7 @@ def ByCategory(sender, Menu = None ):
             serialized = ''
             els = el
             for e in els.getnext().iterchildren():
-              serialized = serialized + (XML.StringFromElement(e)).strip()
+              serialized = serialized + (HTML.StringFromElement(e)).strip()
             
             dir.Append(Function(DirectoryItem(ByCategory, el.text, thumb=R(ICON), art=R(ART)), Menu = str(serialized)))
 
@@ -85,7 +82,7 @@ def AllCategories(sender ):
 
     dir = MediaContainer(viewGroup="List")
 
-    Categories = XML.ElementFromURL('http://www.khanacademy.org/',True).xpath("//h2[@class='playlist-heading']")
+    Categories = HTML.ElementFromURL('http://www.khanacademy.org/').xpath("//h2[@class='playlist-heading']")
 
     for cat in Categories:
       dir.Append(Function(DirectoryItem(Submenu,cat.text,thumb=R(ICON),art=R(ART)),category = cat.text))
@@ -97,7 +94,7 @@ def ParseSearchResults(sender, query=None):
 
     dir = MediaContainer(viewGroup="InfoList")
 
-    results = XML.ElementFromURL('http://www.khanacademy.org/search?page_search_query='+query,True).xpath("//section[@class='videos']//dt/a")
+    results = HTML.ElementFromURL('http://www.khanacademy.org/search?page_search_query='+query).xpath("//section[@class='videos']//dt/a")
 
     if results == []:
         return MessageContainer('No Results','No video file could be found for the following query: '+query)
@@ -109,7 +106,7 @@ def ParseSearchResults(sender, query=None):
 
 def GetSummary(sender,link):
     try:
-      summary = XML.ElementFromURL(BASE+link,True).xpath("//nav[@class='breadcrumbs_nav']")[0].text
+      summary = HTML.ElementFromURL(BASE+link).xpath("//nav[@class='breadcrumbs_nav']")[0].text
     except:
       summary = ""
     return summary
@@ -118,14 +115,14 @@ def Submenu(sender, category, TestPrep = False):
     dir = MediaContainer(viewGroup="List")
 
     if TestPrep == False :
-      html = HTTP.Request('http://www.khanacademy.org/').replace('></A>','>').replace('<div class="clear"></div>','</A>')
-      videolist = XML.ElementFromString(html,True).xpath("//a[@name='"+category+"']/ol//a")
+      html = HTTP.Request('http://www.khanacademy.org/').content.replace('></A>','>').replace('<div class="clear"></div>','</A>')
+      videolist = HTML.ElementFromString(html).xpath("//a[@name='"+category+"']/ol//a")
     else:
-      html = HTTP.Request('http://www.khanacademy.org'+category)
+      html = HTTP.Request('http://www.khanacademy.org'+category).content
       if category == '/gmat':
-        videolist = XML.ElementFromString(html,True).xpath("//center/table[@cellpadding=0]//a[@href!='#']")
+        videolist = HTML.ElementFromString(html).xpath("//center/table[@cellpadding=0]//a[@href!='#']")
       else:
-        videolist = XML.ElementFromString(html,True).xpath("//div[@id='accordion']//a[@href!='#']")
+        videolist = HTML.ElementFromString(html).xpath("//div[@id='accordion']//a[@href!='#']")
       
     for video in videolist:
       dir.Append(Function(VideoItem(PlayVideo,video.text,thumb=R(ICON),art=R(ART)),link = video.get("href")))
@@ -133,7 +130,7 @@ def Submenu(sender, category, TestPrep = False):
     return dir
 
 def GetYouTubeVideo(video_id):
-  yt_page = HTTP.Request(YT_VIDEO_PAGE % (video_id), cacheTime=1)
+  yt_page = HTTP.Request(YT_VIDEO_PAGE % (video_id), cacheTime=1).content
 
   t = re.findall('&t=([^&]+)', yt_page)[0]
   fmt_list = re.findall('&fmt_list=([^&]+)', yt_page)[0]
@@ -156,7 +153,7 @@ def GetYouTubeVideo(video_id):
 
 def PlayVideo(sender,link):
     try:
-      ytid = XML.ElementFromURL(BASE+link,True).xpath("//option[@selected]")[0].get("value")
+      ytid = HTML.ElementFromURL(BASE+link).xpath("//option[@selected]")[0].get("value")
       url = GetYouTubeVideo(ytid)
     except:
       url = "http://www.archive.org/download/KhanAcademy_"+link[link.find("playlist=")+9:].replace("%20",'')+"/"+link[link.find("/video/")+7:link.find("?")]+".flv"
