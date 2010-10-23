@@ -3,7 +3,6 @@ from PMS import *
 from PMS.Objects import *
 from PMS.Shortcuts import *
 
-from BeautifulSoup import BeautifulStoneSoup as BSS
 from collections import deque
 
 import re
@@ -101,7 +100,7 @@ def ParseSearchResults(sender, query=None):
     results = XML.ElementFromURL('http://www.khanacademy.org/search?page_search_query='+query,True).xpath("//section[@class='videos']//dt/a")
 
     if results == []:
-        return MessageContainer('No Results','No video file could be found for teh following query: '+query)
+        return MessageContainer('No Results','No video file could be found for the following query: '+query)
 
     for video in results:
       dir.Append(Function(VideoItem(PlayVideo,video.text,thumb=R(ICON),art=R(ART)),link = video.get("href")))
