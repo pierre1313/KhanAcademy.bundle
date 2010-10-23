@@ -40,7 +40,7 @@ def VideoMainMenu():
 
     dir.Append(Function(DirectoryItem(ByCategory,"Browse By Category...",thumb=R(ICON),art=R(ART))))
     dir.Append(Function(DirectoryItem(AllCategories,"All Categories",thumb=R(ICON),art=R(ART))))
-    dir.Append(Function(InputDirectoryItem(ParseSearchResults,"Search ...","Search",thumb=R("search.png"),art=R(ART))))
+    dir.Append(Function(InputDirectoryItem(ParseSearchResults,"Search ...","Search",thumb=R("icon-search.png"),art=R(ART))))
 
     return dir
 

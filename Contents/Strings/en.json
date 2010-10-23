@@ -1,7 +1,7 @@
 {
-    'Title': 'Khan Academy',
-    'MusicTitle': 'Khan Academy Music',
-    'VideoTitle': 'Khan Academy Video',
-    'PhotosTitle': 'Khan Academy Photos',
-    'ApplicationsTitle': 'Khan Academy Applications',
+    "Title": "Khan Academy",
+    "MusicTitle": "Khan Academy Music",
+    "VideoTitle": "Khan Academy Video",
+    "PhotosTitle": "Khan Academy Photos",
+    "ApplicationsTitle": "Khan Academy Applications"
 }
