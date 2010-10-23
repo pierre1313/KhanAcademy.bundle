@@ -1,0 +1,9 @@
+[
+  {
+    'id': 'ytfmt',
+    'type': 'enum',
+    'label': 'Max. quality of YouTube videos (if available)',
+    'values': ['Standard', 'Medium', 'High', '720p', '1080p'],
+    'default': '1080p'
+  }
+]
