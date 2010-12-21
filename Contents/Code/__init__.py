@@ -1,11 +1,9 @@
 from collections import deque
-
 import re
 
 ####################################################################################################
 
-VIDEO_PREFIX = "/video/khanacademy"
-
+VIDEO_PREFIX = '/video/khanacademy'
 NAME         = 'Khan Academy'
 ART          = 'art-default.jpg'
 ICON         = 'icon-default.png'
@@ -30,7 +28,7 @@ def Start():
     MediaContainer.title1 = NAME
     DirectoryItem.thumb = R(ICON)
     VideoItem.thumb = R(ICON)
-  
+
     HTTP.CacheTime = 3600
 
 def VideoMainMenu():
@@ -43,7 +41,7 @@ def VideoMainMenu():
 
     return dir
 
-def ByCategory(sender, Menu = None ):
+def ByCategory(sender, Menu = None):
 
     dir = MediaContainer(viewGroup="List")
 
@@ -88,8 +86,8 @@ def AllCategories(sender):
 
 
 def ParseSearchResults(sender, query=None):
-
-    dir = MediaContainer(viewGroup="InfoList")
+    cookies = HTTP.GetCookiesForURL('http://www.youtube.com/')
+    dir = MediaContainer(viewGroup="InfoList", httpCookies=cookies)
 
     results = HTML.ElementFromURL('http://www.khanacademy.org/search?page_search_query='+query).xpath("//section[@class='videos']//dt/a")
 
@@ -109,7 +107,8 @@ def GetSummary(sender,link):
     return summary
 
 def Submenu(sender, category, TestPrep = False):
-    dir = MediaContainer(viewGroup="List")
+    cookies = HTTP.GetCookiesForURL('http://www.youtube.com/')
+    dir = MediaContainer(viewGroup="List", httpCookies=cookies)
 
     if TestPrep == False :
       html = HTTP.Request('http://www.khanacademy.org/').content.replace('></A>','>').replace('<div class="clear"></div>','</A>')
@@ -140,7 +139,7 @@ def GetYouTubeVideo(video_id):
     fmts.append(fmt)
     fmts_info[str(fmt)] = url
 
-  index = YT_VIDEO_FORMATS.index(Prefs['ytfmt'])
+  index = YT_VIDEO_FORMATS.index(Prefs['yt_fmt'])
   if YT_FMT[index] in fmts:
     fmt = YT_FMT[index]
   else:
@@ -152,7 +151,7 @@ def GetYouTubeVideo(video_id):
         fmt = 5
 
   url = fmts_info[str(fmt)]
-  return Redirect(url)
+  return url
 
 def PlayVideo(sender,link):
     try:
@@ -162,5 +161,3 @@ def PlayVideo(sender,link):
       url = "http://www.archive.org/download/KhanAcademy_"+link[link.find("playlist=")+9:].replace("%20",'')+"/"+link[link.find("/video/")+7:link.find("?")]+".flv"
 
     return Redirect(url)
-
-  
