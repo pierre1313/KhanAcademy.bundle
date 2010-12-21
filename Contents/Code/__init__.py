@@ -6,24 +6,22 @@ import re
 
 VIDEO_PREFIX = "/video/khanacademy"
 
-NAME = L('Title')
+NAME         = 'Khan Academy'
+ART          = 'art-default.jpg'
+ICON         = 'icon-default.png'
 
-ART           = 'art-default.jpg'
-ICON          = 'icon-default.png'
-
-BASE          = "http://www.khanacademy.org"
+BASE         = "http://www.khanacademy.org"
 
 # YouTube
-YT_VIDEO_PAGE              = 'http://www.youtube.com/watch?v=%s'
-YT_GET_VIDEO_URL           = 'http://www.youtube.com/get_video?video_id=%s&t=%s&fmt=%d&asv=3'
-YT_VIDEO_FORMATS           = ['Standard', 'Medium', 'High', '720p', '1080p']
-YT_FMT                     = [34, 18, 35, 22, 37]
+YT_VIDEO_PAGE    = 'http://www.youtube.com/watch?v=%s'
+YT_VIDEO_FORMATS = ['Standard', 'Medium', 'High', '720p', '1080p']
+YT_FMT           = [34, 18, 35, 22, 37]
 
 ####################################################################################################
 
 def Start():
 
-    Plugin.AddPrefixHandler(VIDEO_PREFIX, VideoMainMenu, L('Title'), ICON, ART)
+    Plugin.AddPrefixHandler(VIDEO_PREFIX, VideoMainMenu, NAME, ICON, ART)
 
     Plugin.AddViewGroup("InfoList", viewMode="InfoList", mediaType="items")
     Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
@@ -79,7 +77,7 @@ def ByCategory(sender, Menu = None ):
     return dir
 
 
-def AllCategories(sender ):
+def AllCategories(sender):
 
     dir = MediaContainer(viewGroup="List")
 
@@ -129,7 +127,7 @@ def Submenu(sender, category, TestPrep = False):
     return dir
  
 def GetYouTubeVideo(video_id):
-  yt_page = HTTP.Request(YOUTUBE_VIDEO_PAGE % (video_id), cacheTime=1).content
+  yt_page = HTTP.Request(YT_VIDEO_PAGE % (video_id), cacheTime=1).content
 
   fmt_url_map = re.findall('"fmt_url_map".+?"([^"]+)', yt_page)[0]
   fmt_url_map = fmt_url_map.replace('\/', '/').split(',')
@@ -142,13 +140,13 @@ def GetYouTubeVideo(video_id):
     fmts.append(fmt)
     fmts_info[str(fmt)] = url
 
-  index = YOUTUBE_VIDEO_FORMATS.index(Prefs['youtube_fmt'])
-  if YOUTUBE_FMT[index] in fmts:
-    fmt = YOUTUBE_FMT[index]
+  index = YT_VIDEO_FORMATS.index(Prefs['ytfmt'])
+  if YT_FMT[index] in fmts:
+    fmt = YT_FMT[index]
   else:
     for i in reversed( range(0, index+1) ):
-      if str(YOUTUBE_FMT[i]) in fmts:
-        fmt = YOUTUBE_FMT[i]
+      if str(YT_FMT[i]) in fmts:
+        fmt = YT_FMT[i]
         break
       else:
         fmt = 5
