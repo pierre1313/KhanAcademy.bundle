@@ -1,4 +1,3 @@
-from collections import deque
 import re
 
 ####################################################################################################
@@ -41,37 +40,26 @@ def VideoMainMenu():
 
     return dir
 
-def ByCategory(sender, Menu = None):
+def ByCategory(sender, MenuLevel = 1, title=''):
 
-    dir = MediaContainer(viewGroup="List")
-
-    if Menu == None:
-      Menu = HTML.ElementFromURL('http://www.khanacademy.org/').xpath("//ul[@class='menu']")[0]
+    dir = MediaContainer(viewGroup="List",title2=title)
+    
+    if MenuLevel>1:
+      parseString = '/ul/li' * (MenuLevel-1) +'[contains(.,"'+title+'")]/ul/li' 
     else:
-      Menu = HTML.ElementFromString(Menu)
-
-    queue = deque([Menu])
-    el = queue.popleft() 
-    queue.extend(el) 
-    while queue:
-      el = queue.popleft()
-      if (el.tag == 'li'):
-        queue.extend(el)
+      parseString = '/ul/li' * MenuLevel
+  
+    Menu = HTML.ElementFromURL('http://www.khanacademy.org/').xpath("//div[@id='browse-fixed']//nav[@class='css-menu']"+parseString)
+    
+    for el in Menu:
+      if (el.text == None):
+        link = el.xpath('.//a')[0]
+        if '#' in link.get('href'):
+          dir.Append(Function(DirectoryItem(Submenu, link.text.strip()), category = String.Unquote(link.get('href').replace('#',''))))
+        else:
+          dir.Append(Function(DirectoryItem(Submenu, link.text.strip()), category = String.Unquote(link.get('href')),TestPrep = True))
       else:
-        if (el.tag == 'a'):
-          if (el.getnext() == None):
-            if el.get('href').find('#') >= 0:
-              dir.Append(Function(DirectoryItem(Submenu, el.text), category = String.Unquote(el.get('href').replace('#',''))))
-            else:
-              dir.Append(Function(DirectoryItem(Submenu, el.text), category = String.Unquote(el.get('href')),TestPrep = True))
-          else:
-            serialized = ''
-            els = el
-            for e in els.getnext().iterchildren():
-              serialized = serialized + (HTML.StringFromElement(e)).strip()
-            
-            dir.Append(Function(DirectoryItem(ByCategory, el.text), Menu = str(serialized)))
-
+        dir.Append(Function(DirectoryItem(ByCategory, el.text.strip()), MenuLevel = MenuLevel+1, title = el.text.strip()))
     return dir
 
 
@@ -79,15 +67,14 @@ def AllCategories(sender):
 
     dir = MediaContainer(viewGroup="List")
 
-    for cat in HTML.ElementFromURL('http://www.khanacademy.org/').xpath("//h2[@class='playlist-heading']"):
-      dir.Append(Function(DirectoryItem(Submenu,cat.text),category = cat.text))
-
+    for playlist in JSON.ObjectFromURL('http://www.khanacademy.org/api/playlists'):
+      dir.Append(Function(DirectoryItem(Submenu,playlist['title']),category = playlist['title']))
     return dir
 
 
 def ParseSearchResults(sender, query=None):
     cookies = HTTP.GetCookiesForURL('http://www.youtube.com/')
-    dir = MediaContainer(viewGroup="InfoList", httpCookies=cookies)
+    dir = MediaContainer(viewGroup="List", httpCookies=cookies)
 
     results = HTML.ElementFromURL('http://www.khanacademy.org/search?page_search_query='+query).xpath("//section[@class='videos']//dt/a")
 
@@ -110,18 +97,36 @@ def Submenu(sender, category, TestPrep = False):
     cookies = HTTP.GetCookiesForURL('http://www.youtube.com/')
     dir = MediaContainer(viewGroup="List", httpCookies=cookies)
 
-    if TestPrep == False :
-      html = HTTP.Request('http://www.khanacademy.org/').content.replace('></A>','>').replace('<div class="clear"></div>','</A>')
-      videolist = HTML.ElementFromString(html).xpath("//a[@name='"+category+"']/ol//a")
-    else:
-      html = HTTP.Request('http://www.khanacademy.org'+category).content
-      if category == '/gmat':
-        videolist = HTML.ElementFromString(html).xpath("//center/table[@cellpadding=0]//a[@href!='#']")
-      else:
-        videolist = HTML.ElementFromString(html).xpath("//div[@id='accordion']//a[@href!='#']")
+    if TestPrep == False:
       
-    for video in videolist:
-      dir.Append(Function(VideoItem(PlayVideo,video.text),link = video.get("href")))
+      Playlist = "http://www.khanacademy.org/api/playlistvideos?playlist=%s"% String.Quote(category)
+      videolist = JSON.ObjectFromURL(Playlist)
+      
+      for video in videolist:
+        dir.Append(Function(VideoItem(PlayVideo,video['title']),link = video['youtube_id']))
+      
+    else:
+      if category == '/gmat':
+        dir.Append(Function(DirectoryItem(Submenu, "Data Sufficiency"), category = "GMAT Data Sufficiency"))
+        dir.Append(Function(DirectoryItem(Submenu, "Problem Solving"), category = "GMAT: Problem Solving"))
+      if category == '/sat':
+         dir.Append(Function(DirectoryItem(Submenu, "All SAT preperation courses"), category = "SAT Preparation"))
+        
+#       html = HTTP.Request('http://www.khanacademy.org'+category).content
+#       if category == '/gmat':
+#         videolist = HTML.ElementFromString(html).xpath("//center/table[@cellpadding=0]//a[@href!='#']")
+#       else:
+#         videolist = HTML.ElementFromString(html).xpath("//div[@id='accordion']//a[@href!='#']")
+#       
+#       for video in videolist:
+#         html = HTTP.Request('http://www.khanacademy.org'+video.get('href'))
+#         page = 'http://www.khanacademy.org'+video.get('href')
+#         title =  HTML.ElementFromURL(page).xpath('//article[@class="video"]//div[@id="description"]//span[@class="title"]')[0].text
+#         yt_link = HTML.ElementFromURL(page).xpath('//object[@id="idOVideo"]//param[@name="movie"]')[0].get('value')
+#         Log(yt_link)
+#         yt_id = re.findall('http://www.youtube.com/v/([^&]+)',yt_link)[0].split('&')[0]
+#         Log(yt_id)
+#         dir.Append(Function(VideoItem(PlayVideo,title),link = yt_id))
                  
     return dir
  
@@ -150,13 +155,12 @@ def GetYouTubeVideo(video_id):
       else:
         fmt = 5
 
-  url = fmts_info[str(fmt)]
+  url = (fmts_info[str(fmt)]).decode('unicode_escape')
   return url
 
 def PlayVideo(sender,link):
     try:
-      ytid = HTML.ElementFromURL(BASE+link).xpath("//option[@selected]")[0].get("value")
-      url = GetYouTubeVideo(ytid)
+      url = GetYouTubeVideo(link)
     except:
       url = "http://www.archive.org/download/KhanAcademy_"+link[link.find("playlist=")+9:].replace("%20",'')+"/"+link[link.find("/video/")+7:link.find("?")]+".flv"
 
