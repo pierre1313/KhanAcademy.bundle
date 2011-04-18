@@ -98,8 +98,10 @@ def Submenu(sender, category, TestPrep = False):
     dir = MediaContainer(viewGroup="List", httpCookies=cookies)
 
     if TestPrep == False:
-      
-      Playlist = "http://www.khanacademy.org/api/playlistvideos?playlist=%s"% String.Quote(category)
+      Log(category)
+      Category = HTML.ElementFromURL('http://www.khanacademy.org/').xpath("//div[@data-role='page' and @id='"+category+"']//h2")[0].text
+      Log(Category)
+      Playlist = "http://www.khanacademy.org/api/playlistvideos?playlist=%s"% String.Quote(Category)
       videolist = JSON.ObjectFromURL(Playlist)
       
       for video in videolist:
@@ -111,23 +113,7 @@ def Submenu(sender, category, TestPrep = False):
         dir.Append(Function(DirectoryItem(Submenu, "Problem Solving"), category = "GMAT: Problem Solving"))
       if category == '/sat':
          dir.Append(Function(DirectoryItem(Submenu, "All SAT preperation courses"), category = "SAT Preparation"))
-        
-#       html = HTTP.Request('http://www.khanacademy.org'+category).content
-#       if category == '/gmat':
-#         videolist = HTML.ElementFromString(html).xpath("//center/table[@cellpadding=0]//a[@href!='#']")
-#       else:
-#         videolist = HTML.ElementFromString(html).xpath("//div[@id='accordion']//a[@href!='#']")
-#       
-#       for video in videolist:
-#         html = HTTP.Request('http://www.khanacademy.org'+video.get('href'))
-#         page = 'http://www.khanacademy.org'+video.get('href')
-#         title =  HTML.ElementFromURL(page).xpath('//article[@class="video"]//div[@id="description"]//span[@class="title"]')[0].text
-#         yt_link = HTML.ElementFromURL(page).xpath('//object[@id="idOVideo"]//param[@name="movie"]')[0].get('value')
-#         Log(yt_link)
-#         yt_id = re.findall('http://www.youtube.com/v/([^&]+)',yt_link)[0].split('&')[0]
-#         Log(yt_id)
-#         dir.Append(Function(VideoItem(PlayVideo,title),link = yt_id))
-                 
+                
     return dir
  
 def GetYouTubeVideo(video_id):
