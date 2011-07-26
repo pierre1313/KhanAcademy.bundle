@@ -68,7 +68,7 @@ def AllCategories(sender):
     dir = MediaContainer(viewGroup="List")
 
     for playlist in JSON.ObjectFromURL('http://www.khanacademy.org/api/playlists'):
-      dir.Append(Function(DirectoryItem(Submenu,playlist['title']),category = playlist['title']))
+      dir.Append(Function(DirectoryItem(Submenu,playlist['title']),category = playlist['title'].lower().replace(' ','-')))
     return dir
 
 
